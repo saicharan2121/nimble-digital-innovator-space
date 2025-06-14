@@ -1,4 +1,3 @@
-
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -25,15 +24,14 @@ export function useAISummary() {
     mutationFn: async (responsesForAi) => {
       if (responsesForAi.length === 0) return "";
 
-      // Use the absolute Supabase Edge Function URL for Lovable/Netlify/Vercel, etc.
       if (!SUPABASE_PROJECT_REF) {
         throw new Error(
           "Supabase project ref not set. Please set SUPABASE_PROJECT_REF in useAISummary.ts"
         );
       }
 
-      // Updated path to /smart-task
-      const edgeFunctionUrl = `https://${SUPABASE_PROJECT_REF}.functions.supabase.co/smart-task`;
+      // The correct path is /generate-ai-summary, not /smart-task!
+      const edgeFunctionUrl = `https://${SUPABASE_PROJECT_REF}.functions.supabase.co/generate-ai-summary`;
 
       const res = await fetch(edgeFunctionUrl, {
         method: "POST",
@@ -69,4 +67,3 @@ export function useAISummary() {
     error,
   };
 }
-
