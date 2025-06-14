@@ -5,7 +5,7 @@ import { useState } from "react";
 export type Response = Record<string, string>;
 
 // CHANGE THIS: Set to your Supabase project ref (the part before `.supabase.co` in your dashboard URL)
-const SUPABASE_PROJECT_REF = ""; // e.g. "abc123xyz456"
+const SUPABASE_PROJECT_REF = "biymctvbhupyuwodjarv"; // set to your project ref
 
 export function useAISummary() {
   const [responses, setResponses] = useState<Response[]>([]);
@@ -32,7 +32,8 @@ export function useAISummary() {
         );
       }
 
-      const edgeFunctionUrl = `https://${SUPABASE_PROJECT_REF}.functions.supabase.co/generate-ai-summary`;
+      // Updated path to /smart-task
+      const edgeFunctionUrl = `https://${SUPABASE_PROJECT_REF}.functions.supabase.co/smart-task`;
 
       const res = await fetch(edgeFunctionUrl, {
         method: "POST",
@@ -68,3 +69,4 @@ export function useAISummary() {
     error,
   };
 }
+
