@@ -4,6 +4,9 @@ import { useState } from "react";
 
 export type Response = Record<string, string>;
 
+// CHANGE THIS: Set to your Supabase project ref (the part before `.supabase.co` in your dashboard URL)
+const SUPABASE_PROJECT_REF = ""; // e.g. "abc123xyz456"
+
 export function useAISummary() {
   const [responses, setResponses] = useState<Response[]>([]);
 
@@ -22,11 +25,14 @@ export function useAISummary() {
     mutationFn: async (responsesForAi) => {
       if (responsesForAi.length === 0) return "";
 
-      // The Edge Function URL for Supabase
-      // If hosted locally: http://localhost:54321/functions/v1/generate-ai-summary
-      // On hosted project: https://{your-supabase-project-ref}.functions.supabase.co/generate-ai-summary
-      // The best practice is to use a relative path in production:
-      const edgeFunctionUrl = "/functions/v1/generate-ai-summary";
+      // Use the absolute Supabase Edge Function URL for Lovable/Netlify/Vercel, etc.
+      if (!SUPABASE_PROJECT_REF) {
+        throw new Error(
+          "Supabase project ref not set. Please set SUPABASE_PROJECT_REF in useAISummary.ts"
+        );
+      }
+
+      const edgeFunctionUrl = `https://${SUPABASE_PROJECT_REF}.functions.supabase.co/generate-ai-summary`;
 
       const res = await fetch(edgeFunctionUrl, {
         method: "POST",
