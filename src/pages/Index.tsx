@@ -1,7 +1,9 @@
+
 import FeatureCard from "@/components/FeatureCard";
 import { Button } from "@/components/ui/button";
 import { Wand2, Sparkles, Tags, BarChart3, TrendingUp } from "lucide-react";
 import FormBuilder from "@/components/FormBuilder";
+import AIInsightsSummary from "@/components/AIInsightsSummary";
 
 const features = [
   {
@@ -66,6 +68,11 @@ const Index = () => {
         </section>
         {/* --- Drag & Drop Form Builder Section --- */}
         <FormBuilder />
+
+        {/* --- AI Insights Summary Below Form Builder --- */}
+        <div className="w-full flex justify-center my-6">
+          <AIInsightsSummary />
+        </div>
 
         {/* Features Grid */}
         <section className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 mb-12">
