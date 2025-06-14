@@ -1,10 +1,11 @@
-
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronRight } from "lucide-react";
+import { useAISummary, Response as ResponseType } from "@/hooks/useAISummary";
+import { Button } from "@/components/ui/button";
 
 const draggableFields = [
   {
@@ -30,35 +31,64 @@ const draggableFields = [
 ];
 
 function renderField(field: { type: string }, idx: number) {
+  const label = getFieldLabel(field.type, idx);
+  const inputName = label;
   switch (field.type) {
     case "text":
       return (
         <div className="space-y-1" key={idx}>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Text Input</label>
-          <Input placeholder="Type here..." />
+          <label className="block text-sm font-medium text-muted-foreground mb-1">{label}</label>
+          <Input
+            name={inputName}
+            value={formValues[inputName] || ""}
+            onChange={handleFormChange}
+            placeholder="Type here..."
+          />
         </div>
       );
     case "email":
       return (
         <div className="space-y-1" key={idx}>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Email Field</label>
-          <Input type="email" placeholder="email@example.com" />
+          <label className="block text-sm font-medium text-muted-foreground mb-1">{label}</label>
+          <Input
+            name={inputName}
+            type="email"
+            value={formValues[inputName] || ""}
+            onChange={handleFormChange}
+            placeholder="email@example.com"
+          />
         </div>
       );
     case "checkbox":
       return (
         <div className="flex items-center space-x-3 mb-2" key={idx}>
-          <Checkbox id={`cb-${idx}`} />
+          <Checkbox
+            id={`cb-${idx}`}
+            name={inputName}
+            checked={(formValues[inputName] || "") === "Checked"}
+            onCheckedChange={(checked: boolean) => {
+              setFormValues((vals) => ({
+                ...vals,
+                [inputName]: checked ? "Checked" : "Unchecked",
+              }));
+            }}
+          />
           <label htmlFor={`cb-${idx}`} className="text-sm text-muted-foreground">
-            Checkbox Label
+            {label}
           </label>
         </div>
       );
     case "dropdown":
       return (
         <div className="space-y-1" key={idx}>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Dropdown</label>
-          <select className="w-full border h-10 rounded-md px-3 py-2 bg-background text-sm">
+          <label className="block text-sm font-medium text-muted-foreground mb-1">{label}</label>
+          <select
+            className="w-full border h-10 rounded-md px-3 py-2 bg-background text-sm"
+            name={inputName}
+            value={formValues[inputName] || ""}
+            onChange={handleFormChange}
+          >
+            <option value="">Select...</option>
             <option>Option 1</option>
             <option>Option 2</option>
           </select>
@@ -67,8 +97,13 @@ function renderField(field: { type: string }, idx: number) {
     case "textarea":
       return (
         <div className="space-y-1" key={idx}>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Textarea</label>
-          <Textarea placeholder="Enter your text..." />
+          <label className="block text-sm font-medium text-muted-foreground mb-1">{label}</label>
+          <Textarea
+            name={inputName}
+            value={formValues[inputName] || ""}
+            onChange={handleFormChange}
+            placeholder="Enter your text..."
+          />
         </div>
       );
     default:
@@ -76,10 +111,78 @@ function renderField(field: { type: string }, idx: number) {
   }
 }
 
+function getFieldLabel(type: string, idx: number) {
+  let label = "";
+  switch (type) {
+    case "text":
+      label = "Text Input";
+      break;
+    case "email":
+      label = "Email Field";
+      break;
+    case "checkbox":
+      label = "Checkbox";
+      break;
+    case "dropdown":
+      label = "Dropdown";
+      break;
+    case "textarea":
+      label = "Textarea";
+      break;
+    default:
+      label = type;
+  }
+  return `${label} ${idx + 1}`;
+}
+
+function handleFormChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+  const { name, value, type, checked } = e.target;
+  setFormValues((vals) => ({
+    ...vals,
+    [name]: type === "checkbox" ? (checked ? "Checked" : "Unchecked") : value,
+  }));
+}
+
+function handleFormSubmit(e: React.FormEvent) {
+  e.preventDefault();
+  // Include all visible fields
+  const resp: ResponseType = {};
+  fields.forEach((f, idx) => {
+    const key = getFieldLabel(f.type, idx);
+    resp[key] = formValues[key] || "";
+  });
+
+  // Save this response
+  addResponse(resp);
+  // Clear form
+  setFormValues({});
+  setShowSubmitSuccess(true);
+
+  // Generate summary with up-to-date responses
+  setTimeout(() => {
+    generateSummary([...responses, resp]);
+    setShowSubmitSuccess(false);
+  }, 700); // short delay for better UI feel
+}
+
 const FormBuilder = () => {
   // For simplicity, use a string to represent the dragged type
   const [dragging, setDragging] = useState<string | null>(null);
   const [fields, setFields] = useState<{ type: string }[]>([]);
+
+  // We'll maintain per-field state for the previewed form
+  const [formValues, setFormValues] = useState<Record<string, string>>({});
+  const [showSubmitSuccess, setShowSubmitSuccess] = useState(false);
+
+  // Integrate AI summary hook here
+  const {
+    responses,
+    addResponse,
+    generateSummary,
+    summary,
+    isLoading: isSummarizing,
+    error: summaryError,
+  } = useAISummary();
 
   function handleDragStart(type: string) {
     setDragging(type);
@@ -131,9 +234,15 @@ const FormBuilder = () => {
             Drag form elements here to add them to your form
           </div>
         ) : (
-          <form className="flex flex-col gap-6">
+          <form className="flex flex-col gap-6" onSubmit={handleFormSubmit}>
             {fields.map((field, idx) => renderField(field, idx))}
+            <Button type="submit" className="mt-4 max-w-xs self-end">
+              Submit Response
+            </Button>
           </form>
+        )}
+        {showSubmitSuccess && (
+          <div className="text-green-700 py-2 font-semibold text-right">Response submitted!</div>
         )}
       </div>
     </section>
