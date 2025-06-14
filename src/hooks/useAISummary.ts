@@ -3,8 +3,8 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
 // WARNING: Never use a secret key like this in production!
-// REPLACE THIS WITH YOUR ACTUAL OPENAI KEY!
-const OPENAI_API_KEY = "sk-REPLACE-WITH-YOUR-ACTUAL-KEY";
+// YOUR PERSONAL OPENAI KEY IS HARDCODED HERE!
+const OPENAI_API_KEY = "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";
 
 export type Response = Record<string, string>;
 

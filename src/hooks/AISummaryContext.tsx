@@ -2,6 +2,8 @@
 import React, { createContext, useContext } from "react";
 import { useAISummary, Response } from "./useAISummary";
 
+export type { Response };
+
 type IAISummaryContext = ReturnType<typeof useAISummary>;
 
 // Create context
