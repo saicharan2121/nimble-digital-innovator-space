@@ -1,8 +1,7 @@
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
-// This type describes a single form response as a generic { [field: string]: string } object
 export type Response = Record<string, string>;
 
 export function useAISummary() {
@@ -14,8 +13,13 @@ export function useAISummary() {
   };
 
   // Mutation to get the AI summary from OpenAI
-  const { data: summary, isLoading, error, mutate: generateSummary } = useMutation<string, Error>({
-    mutationFn: async (responsesForAi: Response[]) => {
+  const {
+    data: summary,
+    isPending,
+    error,
+    mutate: generateSummary
+  } = useMutation<string, Error, Response[]>({
+    mutationFn: async (responsesForAi) => {
       if (responsesForAi.length === 0) return "";
 
       // Compose a prompt for GPT
@@ -41,11 +45,10 @@ Summary:
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // You can add your OpenAI API key here, or better: retrieve from a secret!
           Authorization: `Bearer YOUR_OPENAI_API_KEY`,
         },
         body: JSON.stringify({
-          model: "gpt-4o", // fast/good, or use gpt-3.5-turbo for cheaper
+          model: "gpt-4o",
           messages: [
             {
               role: "system",
@@ -75,7 +78,7 @@ Summary:
     addResponse,
     generateSummary,
     summary,
-    isLoading,
+    isLoading: isPending, // backwards compatible
     error,
   };
 }

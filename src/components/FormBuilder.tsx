@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,141 +31,6 @@ const draggableFields = [
   },
 ];
 
-function renderField(field: { type: string }, idx: number) {
-  const label = getFieldLabel(field.type, idx);
-  const inputName = label;
-  switch (field.type) {
-    case "text":
-      return (
-        <div className="space-y-1" key={idx}>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">{label}</label>
-          <Input
-            name={inputName}
-            value={formValues[inputName] || ""}
-            onChange={handleFormChange}
-            placeholder="Type here..."
-          />
-        </div>
-      );
-    case "email":
-      return (
-        <div className="space-y-1" key={idx}>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">{label}</label>
-          <Input
-            name={inputName}
-            type="email"
-            value={formValues[inputName] || ""}
-            onChange={handleFormChange}
-            placeholder="email@example.com"
-          />
-        </div>
-      );
-    case "checkbox":
-      return (
-        <div className="flex items-center space-x-3 mb-2" key={idx}>
-          <Checkbox
-            id={`cb-${idx}`}
-            name={inputName}
-            checked={(formValues[inputName] || "") === "Checked"}
-            onCheckedChange={(checked: boolean) => {
-              setFormValues((vals) => ({
-                ...vals,
-                [inputName]: checked ? "Checked" : "Unchecked",
-              }));
-            }}
-          />
-          <label htmlFor={`cb-${idx}`} className="text-sm text-muted-foreground">
-            {label}
-          </label>
-        </div>
-      );
-    case "dropdown":
-      return (
-        <div className="space-y-1" key={idx}>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">{label}</label>
-          <select
-            className="w-full border h-10 rounded-md px-3 py-2 bg-background text-sm"
-            name={inputName}
-            value={formValues[inputName] || ""}
-            onChange={handleFormChange}
-          >
-            <option value="">Select...</option>
-            <option>Option 1</option>
-            <option>Option 2</option>
-          </select>
-        </div>
-      );
-    case "textarea":
-      return (
-        <div className="space-y-1" key={idx}>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">{label}</label>
-          <Textarea
-            name={inputName}
-            value={formValues[inputName] || ""}
-            onChange={handleFormChange}
-            placeholder="Enter your text..."
-          />
-        </div>
-      );
-    default:
-      return null;
-  }
-}
-
-function getFieldLabel(type: string, idx: number) {
-  let label = "";
-  switch (type) {
-    case "text":
-      label = "Text Input";
-      break;
-    case "email":
-      label = "Email Field";
-      break;
-    case "checkbox":
-      label = "Checkbox";
-      break;
-    case "dropdown":
-      label = "Dropdown";
-      break;
-    case "textarea":
-      label = "Textarea";
-      break;
-    default:
-      label = type;
-  }
-  return `${label} ${idx + 1}`;
-}
-
-function handleFormChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
-  const { name, value, type, checked } = e.target;
-  setFormValues((vals) => ({
-    ...vals,
-    [name]: type === "checkbox" ? (checked ? "Checked" : "Unchecked") : value,
-  }));
-}
-
-function handleFormSubmit(e: React.FormEvent) {
-  e.preventDefault();
-  // Include all visible fields
-  const resp: ResponseType = {};
-  fields.forEach((f, idx) => {
-    const key = getFieldLabel(f.type, idx);
-    resp[key] = formValues[key] || "";
-  });
-
-  // Save this response
-  addResponse(resp);
-  // Clear form
-  setFormValues({});
-  setShowSubmitSuccess(true);
-
-  // Generate summary with up-to-date responses
-  setTimeout(() => {
-    generateSummary([...responses, resp]);
-    setShowSubmitSuccess(false);
-  }, 700); // short delay for better UI feel
-}
-
 const FormBuilder = () => {
   // For simplicity, use a string to represent the dragged type
   const [dragging, setDragging] = useState<string | null>(null);
@@ -184,6 +50,159 @@ const FormBuilder = () => {
     error: summaryError,
   } = useAISummary();
 
+  // --- Helper functions defined inside the component to access state ---
+
+  function getFieldLabel(type: string, idx: number) {
+    let label = "";
+    switch (type) {
+      case "text":
+        label = "Text Input";
+        break;
+      case "email":
+        label = "Email Field";
+        break;
+      case "checkbox":
+        label = "Checkbox";
+        break;
+      case "dropdown":
+        label = "Dropdown";
+        break;
+      case "textarea":
+        label = "Textarea";
+        break;
+      default:
+        label = type;
+    }
+    return `${label} ${idx + 1}`;
+  }
+
+  function handleFormChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) {
+    const { name, value, type } = e.target;
+    setFormValues((vals) => ({
+      ...vals,
+      [name]:
+        type === "checkbox"
+          ? (e.target as HTMLInputElement).checked
+            ? "Checked"
+            : "Unchecked"
+          : value,
+    }));
+  }
+
+  function renderField(field: { type: string }, idx: number) {
+    const label = getFieldLabel(field.type, idx);
+    const inputName = label;
+
+    switch (field.type) {
+      case "text":
+        return (
+          <div className="space-y-1" key={idx}>
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
+              {label}
+            </label>
+            <Input
+              name={inputName}
+              value={formValues[inputName] || ""}
+              onChange={handleFormChange}
+              placeholder="Type here..."
+            />
+          </div>
+        );
+      case "email":
+        return (
+          <div className="space-y-1" key={idx}>
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
+              {label}
+            </label>
+            <Input
+              name={inputName}
+              type="email"
+              value={formValues[inputName] || ""}
+              onChange={handleFormChange}
+              placeholder="email@example.com"
+            />
+          </div>
+        );
+      case "checkbox":
+        return (
+          <div className="flex items-center space-x-3 mb-2" key={idx}>
+            <Checkbox
+              id={`cb-${idx}`}
+              name={inputName}
+              checked={(formValues[inputName] || "") === "Checked"}
+              onCheckedChange={(checked: boolean) => {
+                setFormValues((vals) => ({
+                  ...vals,
+                  [inputName]: checked ? "Checked" : "Unchecked",
+                }));
+              }}
+            />
+            <label htmlFor={`cb-${idx}`} className="text-sm text-muted-foreground">
+              {label}
+            </label>
+          </div>
+        );
+      case "dropdown":
+        return (
+          <div className="space-y-1" key={idx}>
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
+              {label}
+            </label>
+            <select
+              className="w-full border h-10 rounded-md px-3 py-2 bg-background text-sm"
+              name={inputName}
+              value={formValues[inputName] || ""}
+              onChange={handleFormChange}
+            >
+              <option value="">Select...</option>
+              <option>Option 1</option>
+              <option>Option 2</option>
+            </select>
+          </div>
+        );
+      case "textarea":
+        return (
+          <div className="space-y-1" key={idx}>
+            <label className="block text-sm font-medium text-muted-foreground mb-1">
+              {label}
+            </label>
+            <Textarea
+              name={inputName}
+              value={formValues[inputName] || ""}
+              onChange={handleFormChange}
+              placeholder="Enter your text..."
+            />
+          </div>
+        );
+      default:
+        return null;
+    }
+  }
+
+  function handleFormSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    // Include all visible fields
+    const resp: ResponseType = {};
+    fields.forEach((f, idx) => {
+      const key = getFieldLabel(f.type, idx);
+      resp[key] = formValues[key] || "";
+    });
+
+    // Save this response
+    addResponse(resp);
+    // Clear form
+    setFormValues({});
+    setShowSubmitSuccess(true);
+
+    // Generate summary with up-to-date responses
+    setTimeout(() => {
+      generateSummary([...responses, resp]);
+      setShowSubmitSuccess(false);
+    }, 700); // short delay for better UI feel
+  }
+
   function handleDragStart(type: string) {
     setDragging(type);
   }
@@ -195,7 +214,7 @@ const FormBuilder = () => {
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     if (dragging) {
-      setFields(prev => [...prev, { type: dragging }]);
+      setFields((prev) => [...prev, { type: dragging }]);
       setDragging(null);
     }
   }
@@ -209,7 +228,7 @@ const FormBuilder = () => {
       {/* Left Column: Draggable Fields */}
       <div className="md:w-1/3 w-full flex flex-col gap-4">
         <h2 className="font-bold text-xl mb-2 text-primary">Form Elements</h2>
-        {draggableFields.map(field => (
+        {draggableFields.map((field) => (
           <Card
             key={field.type}
             className="flex items-center gap-2 px-4 py-3 cursor-grab select-none transition-shadow hover:shadow-lg bg-card"
@@ -242,7 +261,9 @@ const FormBuilder = () => {
           </form>
         )}
         {showSubmitSuccess && (
-          <div className="text-green-700 py-2 font-semibold text-right">Response submitted!</div>
+          <div className="text-green-700 py-2 font-semibold text-right">
+            Response submitted!
+          </div>
         )}
       </div>
     </section>
