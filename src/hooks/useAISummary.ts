@@ -4,7 +4,7 @@ import { useState } from "react";
 
 // WARNING: Never use a secret key like this in production!
 // YOUR PERSONAL OPENAI KEY IS HARDCODED HERE!
-const OPENAI_API_KEY = "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";
+const OPENAI_API_KEY = "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";
 
 export type Response = Record<string, string>;
 
