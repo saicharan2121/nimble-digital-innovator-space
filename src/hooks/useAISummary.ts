@@ -12,7 +12,7 @@ export function useAISummary() {
     setResponses((prev) => [...prev, response]);
   };
 
-  // Mutation to get the AI summary from OpenAI
+  // Mutation to get the AI summary from Supabase Edge Function
   const {
     data: summary,
     isPending,
@@ -22,54 +22,24 @@ export function useAISummary() {
     mutationFn: async (responsesForAi) => {
       if (responsesForAi.length === 0) return "";
 
-      // Compose a prompt for GPT
-      const prompt = `
-You are an AI assistant analyzing feedback from form submissions. Given the following user responses, generate a short, clear professional summary highlighting main trends, insights, and pain points. Keep the tone objective, remove repetition, and only include relevant points.
-
-Responses:
-${responsesForAi
-  .map(
-    (r, idx) =>
-      `${idx + 1}. ` +
-      Object.entries(r)
-        .map(([field, val]) => `${field}: ${val}`)
-        .join("; ")
-  )
-  .join("\n")}
-
-Summary:
-`;
-
-      // Call OpenAI API
-      const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+      const resp = await fetch("/functions/v1/generate-ai-summary", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer YOUR_OPENAI_API_KEY`,
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "system",
-              content:
-                "You summarize user feedback into clear, concise, objective insights for product teams.",
-            },
-            {
-              role: "user",
-              content: prompt,
-            },
-          ],
-          max_tokens: 220,
-          temperature: 0.35,
-        }),
+        body: JSON.stringify({ responses: responsesForAi }),
       });
 
-      const json = await resp.json();
-      if (json.choices && json.choices[0] && json.choices[0].message) {
-        return json.choices[0].message.content.trim();
+      if (!resp.ok) {
+        const errText = await resp.text();
+        throw new Error("Edge function error: " + errText);
       }
-      throw new Error("OpenAI API error: " + (json.error?.message || "unknown"));
+
+      const json = await resp.json();
+      if (typeof json.summary === "string") {
+        return json.summary;
+      }
+      throw new Error("Malformed response from edge function");
     },
   });
 
