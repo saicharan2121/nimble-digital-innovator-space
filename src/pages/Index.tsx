@@ -1,7 +1,7 @@
-
 import FeatureCard from "@/components/FeatureCard";
 import { Button } from "@/components/ui/button";
 import { Wand2, Sparkles, Tags, BarChart3, TrendingUp } from "lucide-react";
+import FormBuilder from "@/components/FormBuilder";
 
 const features = [
   {
@@ -64,6 +64,9 @@ const Index = () => {
             Try FormWise AI
           </Button>
         </section>
+        {/* --- Drag & Drop Form Builder Section --- */}
+        <FormBuilder />
+
         {/* Features Grid */}
         <section className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 mb-12">
           {features.slice(0, 2).map((feat, i) => (
