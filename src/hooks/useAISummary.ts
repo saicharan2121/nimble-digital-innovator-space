@@ -2,6 +2,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
+// WARNING: Never use a secret key like this in production!
+// REPLACE THIS WITH YOUR ACTUAL OPENAI KEY!
+const OPENAI_API_KEY = "sk-REPLACE-WITH-YOUR-ACTUAL-KEY";
+
 export type Response = Record<string, string>;
 
 export function useAISummary() {
@@ -12,7 +16,7 @@ export function useAISummary() {
     setResponses((prev) => [...prev, response]);
   };
 
-  // Mutation to get the AI summary from Supabase Edge Function
+  // Mutation to get the AI summary from OpenAI directly
   const {
     data: summary,
     isPending,
@@ -22,24 +26,59 @@ export function useAISummary() {
     mutationFn: async (responsesForAi) => {
       if (responsesForAi.length === 0) return "";
 
-      const resp = await fetch("/functions/v1/generate-ai-summary", {
+      // Craft a prompt from the collected responses
+      const prompt = `
+Form responses from a form builder feedback survey:
+${responsesForAi
+  .map(
+    (resp, i) =>
+      `Response ${i + 1}:\n${Object.entries(resp)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join("\n")}`
+  )
+  .join("\n\n")}
+
+Summarize the most notable trends, feedback themes, and pain points found in these responses. Aim for a concise high-level AI summary (120 words or less).
+`;
+
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${OPENAI_API_KEY}`,
         },
-        body: JSON.stringify({ responses: responsesForAi }),
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [
+            {
+              role: "system",
+              content: "You are an expert form feedback analyst who only ever responds with a single concise paragraph summary of observed trends in user feedback.",
+            },
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          max_tokens: 350,
+          temperature: 0.4,
+        }),
       });
 
-      if (!resp.ok) {
-        const errText = await resp.text();
-        throw new Error("Edge function error: " + errText);
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error("OpenAI API error: " + err);
       }
+      const json = await res.json();
 
-      const json = await resp.json();
-      if (typeof json.summary === "string") {
-        return json.summary;
+      // Extract summary from OpenAI's response
+      const summary =
+        json.choices && json.choices[0] && json.choices[0].message
+          ? json.choices[0].message.content
+          : null;
+      if (typeof summary === "string") {
+        return summary;
       }
-      throw new Error("Malformed response from edge function");
+      throw new Error("Malformed response from OpenAI API");
     },
   });
 
