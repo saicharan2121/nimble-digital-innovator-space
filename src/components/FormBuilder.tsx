@@ -1,11 +1,10 @@
-
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronRight } from "lucide-react";
-import { useAISummary, Response as ResponseType } from "@/hooks/useAISummary";
+import { useAISummaryContext, Response as ResponseType } from "@/hooks/AISummaryContext";
 import { Button } from "@/components/ui/button";
 
 const draggableFields = [
@@ -48,7 +47,7 @@ const FormBuilder = () => {
     summary,
     isLoading: isSummarizing,
     error: summaryError,
-  } = useAISummary();
+  } = useAISummaryContext();
 
   // --- Helper functions defined inside the component to access state ---
 

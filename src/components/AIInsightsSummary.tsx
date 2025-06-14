@@ -1,10 +1,10 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Lightbulb } from "lucide-react";
-import { useAISummary } from "@/hooks/useAISummary";
+import { useAISummaryContext } from "@/hooks/AISummaryContext";
 
 export default function AIInsightsSummary() {
-  const { summary, isLoading, error, responses } = useAISummary();
+  const { summary, isLoading, error, responses } = useAISummaryContext();
 
   // If there are no responses yet, encourage user to submit
   if (!responses.length) {
